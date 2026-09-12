@@ -1,0 +1,452 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+<title>Painel</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=Inter:wght@400;500;600&display=swap');
+
+  :root{
+    --ink: #000000;
+    --panel: #14141A;
+    --panel-line: #24242E;
+    --text: #EDEFF4;
+    --muted: #6E7690;
+    --amber: #6A4FC2;
+    --teal: #4FB0A5;
+  }
+
+  *{ box-sizing: border-box; margin: 0; padding: 0; }
+
+  html, body{
+    width: 100%; height: 100%;
+    background: var(--ink);
+    color: var(--text);
+    font-family: 'Inter', sans-serif;
+    overflow: hidden;
+    -webkit-user-select: none;
+    user-select: none;
+  }
+
+  body{
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    padding: 6vh 6vw 4vh;
+  }
+
+  .clock-zone{
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    flex: 1;
+  }
+
+  .time{
+    font-family: 'Space Grotesk', sans-serif;
+    font-weight: 600;
+    font-size: 20vw;
+    line-height: 0.95;
+    letter-spacing: -0.02em;
+    font-variant-numeric: tabular-nums;
+    color: var(--text);
+  }
+
+  .time .colon{
+    color: var(--amber);
+  }
+
+  .date-row{
+    margin-top: 1.5vh;
+    display: flex;
+    align-items: baseline;
+    gap: 0.8em;
+  }
+
+  .weekday{
+    font-family: 'Space Grotesk', sans-serif;
+    font-size: 1.6rem;
+    font-weight: 500;
+    color: var(--amber);
+    text-transform: capitalize;
+  }
+
+  .full-date{
+    font-size: 1.1rem;
+    color: var(--muted);
+  }
+
+  .divider{
+    height: 1px;
+    background: var(--panel-line);
+    margin: 3vh 0 3vh;
+  }
+
+  .status-row{
+    display: flex;
+    align-items: stretch;
+    gap: 3vw;
+  }
+
+  .card{
+    background: var(--panel);
+    border-radius: 14px;
+    padding: 2.2vh 2vw;
+    display: flex;
+    align-items: center;
+    gap: 1.4vw;
+  }
+
+  .weather-card{ flex: 1; }
+
+  .weather-icon{ font-size: 3rem; line-height: 1; }
+
+  .weather-info{ display: flex; flex-direction: column; gap: 0.2em; }
+
+  .weather-temp{
+    font-family: 'Space Grotesk', sans-serif;
+    font-size: 2rem;
+    font-weight: 600;
+  }
+
+  .weather-desc{ color: var(--muted); font-size: 0.95rem; }
+  .weather-city{ color: var(--muted); font-size: 0.8rem; margin-top: 0.3em; }
+
+  .music-card{
+    flex: 1.4;
+    cursor: pointer;
+  }
+
+  .album-art{
+    width: 56px; height: 56px;
+    border-radius: 8px;
+    background: #22283A center/cover no-repeat;
+    flex-shrink: 0;
+  }
+
+  .music-info{
+    display: flex;
+    flex-direction: column;
+    gap: 0.2em;
+    overflow: hidden;
+  }
+
+  .track-name{
+    font-size: 1.05rem;
+    font-weight: 600;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  .artist-name{
+    color: var(--muted);
+    font-size: 0.9rem;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  .music-idle{
+    color: var(--muted);
+    font-size: 0.95rem;
+  }
+
+  .eq{
+    display: flex;
+    align-items: flex-end;
+    gap: 3px;
+    height: 16px;
+    margin-left: auto;
+    flex-shrink: 0;
+  }
+
+  .eq span{
+    width: 3px;
+    background: var(--teal);
+    border-radius: 2px;
+    animation: bounce 1s ease-in-out infinite;
+  }
+
+  .eq span:nth-child(1){ animation-delay: 0s; }
+  .eq span:nth-child(2){ animation-delay: 0.2s; }
+  .eq span:nth-child(3){ animation-delay: 0.4s; }
+
+  @keyframes bounce{
+    0%, 100%{ height: 4px; }
+    50%{ height: 16px; }
+  }
+
+  .connect-btn{
+    background: var(--teal);
+    color: #0D2320;
+    border: none;
+    border-radius: 8px;
+    padding: 0.6em 1.1em;
+    font-family: 'Inter', sans-serif;
+    font-weight: 600;
+    font-size: 0.9rem;
+    cursor: pointer;
+  }
+
+  @media (prefers-reduced-motion: reduce){
+    .eq span{ animation: none; height: 10px; }
+  }
+</style>
+</head>
+<body>
+
+  <div class="clock-zone">
+    <div class="time" id="time">--:--</div>
+    <div class="date-row">
+      <span class="weekday" id="weekday">-</span>
+      <span class="full-date" id="fullDate">-</span>
+    </div>
+  </div>
+
+  <div class="divider"></div>
+
+  <div class="status-row">
+    <div class="card weather-card">
+      <div class="weather-icon" id="weatherIcon">🌤️</div>
+      <div class="weather-info">
+        <div class="weather-temp" id="weatherTemp">--°</div>
+        <div class="weather-desc" id="weatherDesc">Carregando clima</div>
+        <div class="weather-city" id="weatherCity">-</div>
+      </div>
+    </div>
+
+    <div class="card music-card" id="musicCard">
+      <div class="album-art" id="albumArt"></div>
+      <div class="music-info" id="musicInfo">
+        <div class="music-idle" id="musicIdle">Nada tocando</div>
+      </div>
+      <div class="eq" id="eq" style="display:none">
+        <span></span><span></span><span></span>
+      </div>
+    </div>
+  </div>
+
+<script>
+/* ======================= CONFIGURAÇÃO ======================= */
+// Coordenadas para a previsão do tempo (padrão: São Paulo, SP)
+const LAT = -23.5228;
+const LON = -46.1888;
+const CITY_NAME = "Mogi das Cruzes, SP";
+
+// Preencha com o Client ID criado no Spotify Developer Dashboard
+const SPOTIFY_CLIENT_ID = "COLOQUE_SEU_CLIENT_ID_AQUI";
+const REDIRECT_URI = window.location.origin + window.location.pathname;
+/* =============================================================== */
+
+/* ---------- Relógio ---------- */
+function updateClock(){
+  const now = new Date();
+  const h = String(now.getHours()).padStart(2,'0');
+  const m = String(now.getMinutes()).padStart(2,'0');
+  const colonVisible = now.getSeconds() % 2 === 0;
+  document.getElementById('time').innerHTML =
+    `${h}<span class="colon">${colonVisible ? ':' : ' '}</span>${m}`;
+
+  const weekdays = ['domingo','segunda-feira','terça-feira','quarta-feira','quinta-feira','sexta-feira','sábado'];
+  const months = ['janeiro','fevereiro','março','abril','maio','junho','julho','agosto','setembro','outubro','novembro','dezembro'];
+  document.getElementById('weekday').textContent = weekdays[now.getDay()];
+  document.getElementById('fullDate').textContent = `${now.getDate()} de ${months[now.getMonth()]}`;
+}
+setInterval(updateClock, 1000);
+updateClock();
+
+/* ---------- Clima (Open-Meteo, sem chave) ---------- */
+const WEATHER_CODES = {
+  0:['☀️','Céu limpo'], 1:['🌤️','Poucas nuvens'], 2:['⛅','Parcialmente nublado'], 3:['☁️','Nublado'],
+  45:['🌫️','Neblina'], 48:['🌫️','Neblina com geada'],
+  51:['🌦️','Garoa leve'], 53:['🌦️','Garoa'], 55:['🌧️','Garoa forte'],
+  61:['🌧️','Chuva leve'], 63:['🌧️','Chuva'], 65:['🌧️','Chuva forte'],
+  71:['🌨️','Neve leve'], 73:['🌨️','Neve'], 75:['❄️','Neve forte'],
+  80:['🌦️','Pancadas de chuva'], 81:['🌧️','Pancadas fortes'], 82:['⛈️','Pancadas intensas'],
+  95:['⛈️','Tempestade'], 96:['⛈️','Tempestade com granizo'], 99:['⛈️','Tempestade forte']
+};
+
+async function updateWeather(){
+  try{
+    const url = `https://api.open-meteo.com/v1/forecast?latitude=${LAT}&longitude=${LON}&current=temperature_2m,weather_code&timezone=auto`;
+    const res = await fetch(url);
+    const data = await res.json();
+    const temp = Math.round(data.current.temperature_2m);
+    const code = data.current.weather_code;
+    const [icon, desc] = WEATHER_CODES[code] || ['🌡️','—'];
+    document.getElementById('weatherIcon').textContent = icon;
+    document.getElementById('weatherTemp').textContent = `${temp}°`;
+    document.getElementById('weatherDesc').textContent = desc;
+    document.getElementById('weatherCity').textContent = CITY_NAME;
+  }catch(e){
+    document.getElementById('weatherDesc').textContent = 'Sem conexão';
+  }
+}
+updateWeather();
+setInterval(updateWeather, 10 * 60 * 1000); // a cada 10 min
+
+/* ---------- Spotify (PKCE, 100% client-side) ---------- */
+const SPOTIFY_SCOPES = "user-read-currently-playing user-read-playback-state";
+
+function base64url(buffer){
+  return btoa(String.fromCharCode(...new Uint8Array(buffer)))
+    .replace(/\+/g,'-').replace(/\//g,'_').replace(/=+$/,'');
+}
+
+async function sha256(plain){
+  const data = new TextEncoder().encode(plain);
+  return await crypto.subtle.digest('SHA-256', data);
+}
+
+function randomString(len){
+  const arr = new Uint8Array(len);
+  crypto.getRandomValues(arr);
+  return Array.from(arr, b => ('0'+b.toString(16)).slice(-2)).join('');
+}
+
+async function startSpotifyLogin(){
+  const verifier = randomString(64);
+  localStorage.setItem('sp_verifier', verifier);
+  const challenge = base64url(await sha256(verifier));
+
+  const params = new URLSearchParams({
+    client_id: SPOTIFY_CLIENT_ID,
+    response_type: 'code',
+    redirect_uri: REDIRECT_URI,
+    scope: SPOTIFY_SCOPES,
+    code_challenge_method: 'S256',
+    code_challenge: challenge
+  });
+  window.location = `https://accounts.spotify.com/authorize?${params.toString()}`;
+}
+
+async function exchangeCodeForToken(code){
+  const verifier = localStorage.getItem('sp_verifier');
+  const body = new URLSearchParams({
+    client_id: SPOTIFY_CLIENT_ID,
+    grant_type: 'authorization_code',
+    code,
+    redirect_uri: REDIRECT_URI,
+    code_verifier: verifier
+  });
+  const res = await fetch('https://accounts.spotify.com/api/token', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+    body
+  });
+  const data = await res.json();
+  if(data.access_token){
+    saveTokens(data);
+  }
+}
+
+async function refreshToken(){
+  const refresh = localStorage.getItem('sp_refresh');
+  if(!refresh) return null;
+  const body = new URLSearchParams({
+    client_id: SPOTIFY_CLIENT_ID,
+    grant_type: 'refresh_token',
+    refresh_token: refresh
+  });
+  const res = await fetch('https://accounts.spotify.com/api/token', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+    body
+  });
+  const data = await res.json();
+  if(data.access_token){
+    saveTokens(data);
+    return data.access_token;
+  }
+  return null;
+}
+
+function saveTokens(data){
+  localStorage.setItem('sp_access', data.access_token);
+  localStorage.setItem('sp_expires', Date.now() + (data.expires_in * 1000));
+  if(data.refresh_token) localStorage.setItem('sp_refresh', data.refresh_token);
+}
+
+async function getValidToken(){
+  const expires = Number(localStorage.getItem('sp_expires') || 0);
+  const access = localStorage.getItem('sp_access');
+  if(access && Date.now() < expires - 30000) return access;
+  return await refreshToken();
+}
+
+function showIdle(message){
+  document.getElementById('albumArt').style.backgroundImage = '';
+  document.getElementById('eq').style.display = 'none';
+  document.getElementById('musicInfo').innerHTML = `<div class="music-idle">${message}</div>`;
+}
+
+function showConnectButton(){
+  document.getElementById('albumArt').style.backgroundImage = '';
+  document.getElementById('eq').style.display = 'none';
+  document.getElementById('musicInfo').innerHTML =
+    `<button class="connect-btn" onclick="startSpotifyLogin()">Conectar Spotify</button>`;
+}
+
+async function updateNowPlaying(){
+  if(SPOTIFY_CLIENT_ID === "COLOQUE_SEU_CLIENT_ID_AQUI"){
+    showIdle('Configure o Client ID do Spotify');
+    return;
+  }
+
+  const token = await getValidToken();
+  if(!token){
+    showConnectButton();
+    return;
+  }
+
+  try{
+    const res = await fetch('https://api.spotify.com/v1/me/player/currently-playing', {
+      headers: { Authorization: `Bearer ${token}` }
+    });
+
+    if(res.status === 204 || res.status === 202){
+      showIdle('Nada tocando agora');
+      return;
+    }
+    if(!res.ok){
+      showIdle('Sem conexão com o Spotify');
+      return;
+    }
+
+    const data = await res.json();
+    if(!data || !data.item){
+      showIdle('Nada tocando agora');
+      return;
+    }
+
+    const track = data.item.name;
+    const artists = data.item.artists.map(a => a.name).join(', ');
+    const art = data.item.album.images[0]?.url || '';
+
+    document.getElementById('albumArt').style.backgroundImage = art ? `url('${art}')` : '';
+    document.getElementById('musicInfo').innerHTML = `
+      <div class="track-name">${track}</div>
+      <div class="artist-name">${artists}</div>
+    `;
+    document.getElementById('eq').style.display = data.is_playing ? 'flex' : 'none';
+  }catch(e){
+    showIdle('Sem conexão com o Spotify');
+  }
+}
+
+/* Trata o retorno do login (?code=...) */
+(async function initSpotify(){
+  const params = new URLSearchParams(window.location.search);
+  const code = params.get('code');
+  if(code){
+    await exchangeCodeForToken(code);
+    window.history.replaceState({}, document.title, REDIRECT_URI);
+  }
+  updateNowPlaying();
+  setInterval(updateNowPlaying, 8000);
+})();
+</script>
+</body>
+</html>
