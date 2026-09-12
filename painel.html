@@ -178,18 +178,6 @@
     50%{ height: 16px; }
   }
 
-  .connect-btn{
-    background: var(--teal);
-    color: #0D2320;
-    border: none;
-    border-radius: 8px;
-    padding: 0.6em 1.1em;
-    font-family: 'Inter', sans-serif;
-    font-weight: 600;
-    font-size: 0.9rem;
-    cursor: pointer;
-  }
-
   @media (prefers-reduced-motion: reduce){
     .eq span{ animation: none; height: 10px; }
   }
@@ -235,9 +223,9 @@ const LAT = -23.5228;
 const LON = -46.1888;
 const CITY_NAME = "Mogi das Cruzes, SP";
 
-// Preencha com o Client ID criado no Spotify Developer Dashboard
-const SPOTIFY_CLIENT_ID = "7542a4c6dcec4c91a9945a6b74e29dc6";
-const REDIRECT_URI = window.location.origin + window.location.pathname;
+// Preencha com sua API key gratuita do Last.fm e seu nome de usuário
+const LASTFM_API_KEY = "7542a4c6dcec4c91a9945a6b74e29dc6";
+const LASTFM_USERNAME = "Gabrielvcdias";
 /* =============================================================== */
 
 /* ---------- Relógio ---------- */
@@ -287,166 +275,60 @@ async function updateWeather(){
 updateWeather();
 setInterval(updateWeather, 10 * 60 * 1000); // a cada 10 min
 
-/* ---------- Spotify (PKCE, 100% client-side) ---------- */
-const SPOTIFY_SCOPES = "user-read-currently-playing user-read-playback-state";
-
-function base64url(buffer){
-  return btoa(String.fromCharCode(...new Uint8Array(buffer)))
-    .replace(/\+/g,'-').replace(/\//g,'_').replace(/=+$/,'');
-}
-
-async function sha256(plain){
-  const data = new TextEncoder().encode(plain);
-  return await crypto.subtle.digest('SHA-256', data);
-}
-
-function randomString(len){
-  const arr = new Uint8Array(len);
-  crypto.getRandomValues(arr);
-  return Array.from(arr, b => ('0'+b.toString(16)).slice(-2)).join('');
-}
-
-async function startSpotifyLogin(){
-  const verifier = randomString(64);
-  localStorage.setItem('sp_verifier', verifier);
-  const challenge = base64url(await sha256(verifier));
-
-  const params = new URLSearchParams({
-    client_id: SPOTIFY_CLIENT_ID,
-    response_type: 'code',
-    redirect_uri: REDIRECT_URI,
-    scope: SPOTIFY_SCOPES,
-    code_challenge_method: 'S256',
-    code_challenge: challenge
-  });
-  window.location = `https://accounts.spotify.com/authorize?${params.toString()}`;
-}
-
-async function exchangeCodeForToken(code){
-  const verifier = localStorage.getItem('sp_verifier');
-  const body = new URLSearchParams({
-    client_id: SPOTIFY_CLIENT_ID,
-    grant_type: 'authorization_code',
-    code,
-    redirect_uri: REDIRECT_URI,
-    code_verifier: verifier
-  });
-  const res = await fetch('https://accounts.spotify.com/api/token', {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-    body
-  });
-  const data = await res.json();
-  if(data.access_token){
-    saveTokens(data);
-  }
-}
-
-async function refreshToken(){
-  const refresh = localStorage.getItem('sp_refresh');
-  if(!refresh) return null;
-  const body = new URLSearchParams({
-    client_id: SPOTIFY_CLIENT_ID,
-    grant_type: 'refresh_token',
-    refresh_token: refresh
-  });
-  const res = await fetch('https://accounts.spotify.com/api/token', {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-    body
-  });
-  const data = await res.json();
-  if(data.access_token){
-    saveTokens(data);
-    return data.access_token;
-  }
-  return null;
-}
-
-function saveTokens(data){
-  localStorage.setItem('sp_access', data.access_token);
-  localStorage.setItem('sp_expires', Date.now() + (data.expires_in * 1000));
-  if(data.refresh_token) localStorage.setItem('sp_refresh', data.refresh_token);
-}
-
-async function getValidToken(){
-  const expires = Number(localStorage.getItem('sp_expires') || 0);
-  const access = localStorage.getItem('sp_access');
-  if(access && Date.now() < expires - 30000) return access;
-  return await refreshToken();
-}
-
+/* ---------- Last.fm (leitura simples, sem login) ---------- */
 function showIdle(message){
   document.getElementById('albumArt').style.backgroundImage = '';
   document.getElementById('eq').style.display = 'none';
   document.getElementById('musicInfo').innerHTML = `<div class="music-idle">${message}</div>`;
 }
 
-function showConnectButton(){
-  document.getElementById('albumArt').style.backgroundImage = '';
-  document.getElementById('eq').style.display = 'none';
-  document.getElementById('musicInfo').innerHTML =
-    `<button class="connect-btn" onclick="startSpotifyLogin()">Conectar Spotify</button>`;
-}
-
 async function updateNowPlaying(){
-  if(SPOTIFY_CLIENT_ID === "COLOQUE_SEU_CLIENT_ID_AQUI"){
-    showIdle('Configure o Client ID do Spotify');
-    return;
-  }
-
-  const token = await getValidToken();
-  if(!token){
-    showConnectButton();
+  if(LASTFM_API_KEY === "COLOQUE_SUA_API_KEY_AQUI" || LASTFM_USERNAME === "SEU_USUARIO_LASTFM"){
+    showIdle('Configure a API key e o usuário do Last.fm');
     return;
   }
 
   try{
-    const res = await fetch('https://api.spotify.com/v1/me/player/currently-playing', {
-      headers: { Authorization: `Bearer ${token}` }
-    });
-
-    if(res.status === 204 || res.status === 202){
-      showIdle('Nada tocando agora');
-      return;
-    }
+    const url = `https://ws.audioscrobbler.com/2.0/?method=user.getrecenttracks&user=${encodeURIComponent(LASTFM_USERNAME)}&api_key=${LASTFM_API_KEY}&format=json&limit=1`;
+    const res = await fetch(url);
     if(!res.ok){
-      showIdle('Sem conexão com o Spotify');
+      showIdle('Sem conexão com o Last.fm');
       return;
     }
-
     const data = await res.json();
-    if(!data || !data.item){
+    const track = data?.recenttracks?.track?.[0];
+
+    if(!track){
       showIdle('Nada tocando agora');
       return;
     }
 
-    const track = data.item.name;
-    const artists = data.item.artists.map(a => a.name).join(', ');
-    const art = data.item.album.images[0]?.url || '';
+    const isPlaying = track['@attr']?.nowplaying === 'true';
+    if(!isPlaying){
+      showIdle('Nada tocando agora');
+      return;
+    }
+
+    const name = track.name;
+    const artist = track.artist?.['#text'] || '';
+    const art = track.image?.find(i => i.size === 'extralarge')?.['#text']
+             || track.image?.find(i => i.size === 'large')?.['#text']
+             || '';
 
     document.getElementById('albumArt').style.backgroundImage = art ? `url('${art}')` : '';
     document.getElementById('musicInfo').innerHTML = `
-      <div class="track-name">${track}</div>
-      <div class="artist-name">${artists}</div>
+      <div class="track-name">${name}</div>
+      <div class="artist-name">${artist}</div>
     `;
-    document.getElementById('eq').style.display = data.is_playing ? 'flex' : 'none';
+    document.getElementById('eq').style.display = 'flex';
   }catch(e){
-    showIdle('Sem conexão com o Spotify');
+    showIdle('Sem conexão com o Last.fm');
   }
 }
 
-/* Trata o retorno do login (?code=...) */
-(async function initSpotify(){
-  const params = new URLSearchParams(window.location.search);
-  const code = params.get('code');
-  if(code){
-    await exchangeCodeForToken(code);
-    window.history.replaceState({}, document.title, REDIRECT_URI);
-  }
-  updateNowPlaying();
-  setInterval(updateNowPlaying, 8000);
-})();
+updateNowPlaying();
+setInterval(updateNowPlaying, 10000);
+
 </script>
 </body>
 </html>
