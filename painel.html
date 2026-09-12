@@ -2,7 +2,11 @@
 <html lang="pt-BR">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no, viewport-fit=cover">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="theme-color" content="#000000">
+<link rel="manifest" href="manifest.json">
 <title>Painel</title>
 <style>
   @import url('https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=Inter:wght@400;500;600&display=swap');
@@ -328,6 +332,17 @@ async function updateNowPlaying(){
 
 updateNowPlaying();
 setInterval(updateNowPlaying, 10000);
+
+/* ---------- Tela cheia real (esconde barra de navegação do Android) ---------- */
+function goFullscreen(){
+  const el = document.documentElement;
+  if(el.requestFullscreen) el.requestFullscreen().catch(()=>{});
+  else if(el.webkitRequestFullscreen) el.webkitRequestFullscreen();
+}
+document.addEventListener('click', goFullscreen, { once: true });
+document.addEventListener('touchstart', goFullscreen, { once: true });
+window.addEventListener('load', () => setTimeout(goFullscreen, 300));
+
 
 </script>
 </body>
